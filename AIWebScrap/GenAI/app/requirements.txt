@@ -11,3 +11,4 @@ langchain-community
 pandas
 python-dotenv
 chromadb
+protoc==3.19.0
