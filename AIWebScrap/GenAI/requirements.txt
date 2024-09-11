@@ -1,0 +1,13 @@
+streamlit 
+langchain 
+langchain_ollama
+selenium
+beautifulsoup4
+lxml 
+html5lib
+python-dotenv
+langchain-groq
+langchain-community
+pandas
+python-dotenv
+chromadb
