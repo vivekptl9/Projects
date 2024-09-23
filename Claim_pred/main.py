@@ -93,12 +93,18 @@ if file_name:
     model_options = st.multiselect("Choose classifiers", ['Decision Tree', 'Random Forest', 'KNN', 'XGBoost', 'Stacking'])
 
 
+
+
 # Initialize the models based on user selection
-selected_models = {name: models[name] for name in model_options}
+model_options = st.multiselect("Select Models", options=list(models.keys()), default=list(models.keys()))
 
+if not model_options:
+    st.warning("Please select at least one model to proceed.")
+else:
+    selected_models = {name: models[name] for name in model_options}
 
-# Manual data input form
-st.subheader("Manual Data Entry for Prediction")
+    # Manual data input form
+    st.subheader("Manual Data Entry for Prediction")
 
 # Create a wide layout for input fields with 4 rows
 num_columns = 4  # Set to 4 for a 4x4 layout
