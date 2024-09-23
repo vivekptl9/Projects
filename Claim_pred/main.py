@@ -78,15 +78,28 @@ if file_name:
         return model
 
     def get_models():
-        models = dict()
-        models['Decision Tree'] = DecisionTreeClassifier(max_depth=10)
-        models['Random Forest'] = RandomForestClassifier(n_estimators=500)
-        models['KNN'] = KNeighborsClassifier(5)
-        models['XGBoost'] = XGBClassifier(objective='binary:logistic', eval_metric='logloss')
-        models['Stacking'] = get_stacking()
-        return models
+    models = {
+        'DT': DecisionTreeClassifier(max_depth=10),
+        'RF': RandomForestClassifier(n_estimators=500),
+        'KNN': KNeighborsClassifier(5),
+        'XGB': XGBClassifier(objective='binary:logistic', eval_metric='logloss'),
+        'Stacking': StackingClassifier(estimators=[
+            ('DT', DecisionTreeClassifier(max_depth=10)),
+            ('RF', RandomForestClassifier(n_estimators=500)),
+            ('KNN', KNeighborsClassifier(5))
+        ], final_estimator=LogisticRegression())
+    }
+    return models
 
     models = get_models()
+
+# User model selection
+model_options = st.multiselect("Select Models", options=list(models.keys()), default=list(models.keys()))
+
+if not model_options:
+    st.warning("Please select at least one model to proceed.")
+else:
+    selected_models = {name: models[name] for name in model_options}
 
     # Allow user to select models
     st.subheader("Select Classifiers")
