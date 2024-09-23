@@ -92,15 +92,15 @@ if file_name:
         return models
 
     
-models = get_models()
+    models = get_models()
 
 # User model selection
-model_options = st.multiselect("Select Models", options=list(models.keys()), default=list(models.keys()))
+    model_options = st.multiselect("Select Models", options=list(models.keys()), default=list(models.keys()))
 
-if not model_options:
-    st.warning("Please select at least one model to proceed.")
-else:
-    selected_models = {name: models[name] for name in model_options}
+    if not model_options:
+        st.warning("Please select at least one model to proceed.")
+    else:
+        selected_models = {name: models[name] for name in model_options}
 
     # Allow user to select models
     st.subheader("Select Classifiers")
