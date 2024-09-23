@@ -91,7 +91,8 @@ if file_name:
     }
     return models
 
-    models = get_models()
+    
+models = get_models()
 
 # User model selection
 model_options = st.multiselect("Select Models", options=list(models.keys()), default=list(models.keys()))
