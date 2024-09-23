@@ -13,6 +13,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
 from numpy import mean, std
 import warnings
+import os
 
 # Initialize the model dictionary
 def get_models():
@@ -32,11 +33,12 @@ def get_models():
 # Streamlit app layout
 st.title("Insurance Fraud Detection")
 
-# File uploader for CSV file
-selected_file = st.file_uploader("Upload a CSV file", type=["csv"])
+# Dropdown for file selection
+files = ['insurance_claims.csv']  # List of available files
+selected_file = st.selectbox("Select a CSV file", options=files)
 
 if selected_file:
-    # Load data from the uploaded CSV file
+    # Load data from the selected CSV file
     df = pd.read_csv(selected_file)
     st.write("Data Preview:")
     st.write(df.head())  # Display the first few rows of the DataFrame
@@ -148,4 +150,4 @@ if selected_file:
             else:
                 st.write("No models were evaluated.")
 else:
-    st.info("Please upload a CSV file to proceed.")
+    st.info("Please select a CSV file to proceed.")
