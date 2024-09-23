@@ -78,7 +78,7 @@ if file_name:
         return model
 
     def get_models():
-    models = {
+        models = {
         'DT': DecisionTreeClassifier(max_depth=10),
         'RF': RandomForestClassifier(n_estimators=500),
         'KNN': KNeighborsClassifier(5),
@@ -89,7 +89,7 @@ if file_name:
             ('KNN', KNeighborsClassifier(5))
         ], final_estimator=LogisticRegression())
     }
-    return models
+        return models
 
     
 models = get_models()
