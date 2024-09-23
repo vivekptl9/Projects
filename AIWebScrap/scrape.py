@@ -15,7 +15,7 @@ def scrape_website (website):
 
     sbr_connection = ChromiumRemoteConnection(SBR_WEBDRIVER, 'goog', 'chrome')
     with Remote(sbr_connection, options=ChromeOptions()) as driver:
-        print('Connected! Navigating to https://example.com...')
+        print('Connected! Navigating to ...')
         driver.get(website)
         # CAPTCHA handling: If you're expecting a CAPTCHA on the target page, use the following code snippet to check the status of Scraping Browser's automatic CAPTCHA solver
         print('Waiting captcha to solve...')
@@ -65,6 +65,6 @@ def clean_body_content(body_content):
 def split_dom_content(dom_content, max_length=6000):
 
     return [
-        dom_content[i:i+max_length] for i in range(0, len(dom_content), max_tokens)
+        dom_content[i:i+max_length] for i in range(0, len(dom_content), max_length)
         ]
     
