@@ -30,123 +30,125 @@ def get_models():
     }
     return models
 
-# Load your data
-directory = os.getcwd()
-file_name = 'insurance_claims.csv'
-file_path = os.path.join(directory, file_name)
-
-# Check if the file exists
-if os.path.exists(file_path):
-    df = pd.read_csv(file_path)
-else:
-    st.error(f"{file_name} not found in {directory}.")
-    st.stop()
-
-# Preprocessing
-df.drop(columns=['_c39'], inplace=True, errors='ignore')
-df.replace('?', np.nan, inplace=True)
-df.fillna({
-    'police_report_available': df['police_report_available'].mode()[0],
-    'property_damage': df['property_damage'].mode()[0],
-    'collision_type': df['collision_type'].mode()[0],
-    'authorities_contacted': df['authorities_contacted'].mode()[0]
-}, inplace=True)
-
-le = LabelEncoder()
-for col in df.select_dtypes(include='object').columns:
-    df[col] = le.fit_transform(df[col])
-y = df.fraud_reported
-feat = list(df.columns)
-feat.remove('fraud_reported')
-x = df[feat]
-
-# Train-test split
-X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42, stratify=y)
-
-# Handle class imbalance
-smt = SMOTE()
-X_train, y_train = smt.fit_resample(X_train, y_train)
-
-# Load models
-models = get_models()
-
 # Streamlit app layout
 st.title("Insurance Fraud Detection")
 
-# Model selection
-model_options = st.multiselect("Select Models", options=list(models.keys()), default=list(models.keys()))
+# Dropdown for selecting the file
+directory = os.getcwd()
+file_names = [f for f in os.listdir(directory) if f.endswith('.csv')]
+selected_file = st.selectbox("Select a CSV file", options=file_names)
 
-if not model_options:
-    st.warning("Please select at least one model to proceed.")
-else:
-    selected_models = {name: models[name] for name in model_options}
+if selected_file:
+    # Load data from the selected CSV file
+    df = pd.read_csv(selected_file)
+    st.write("Data Preview:")
+    st.write(df.head())  # Display the first few rows of the DataFrame
 
-    # Manual data input form
-    st.subheader("Manual Data Entry for Prediction")
+    # Preprocessing
+    df.drop(columns=['_c39'], inplace=True, errors='ignore')
+    df.replace('?', np.nan, inplace=True)
+    df.fillna({
+        'police_report_available': df['police_report_available'].mode()[0],
+        'property_damage': df['property_damage'].mode()[0],
+        'collision_type': df['collision_type'].mode()[0],
+        'authorities_contacted': df['authorities_contacted'].mode()[0]
+    }, inplace=True)
 
-    # Create a wide layout for input fields with 4 rows
-    num_columns = 4
-    columns = st.columns(num_columns)
-
-    input_data = {}
-    for idx, col in enumerate(feat):
-        with columns[idx % num_columns]:  # Cycle through columns
-            if df[col].dtype == 'object':
-                input_data[col] = st.selectbox(f"Select {col}", df[col].unique())
-            else:
-                input_data[col] = st.number_input(f"Enter {col}", value=float(df[col].mean()))
-
-    # Convert input_data to a DataFrame for prediction
-    input_df = pd.DataFrame([input_data])
-
-    # Preprocess the manually input data
+    le = LabelEncoder()
     for col in df.select_dtypes(include='object').columns:
-        input_df[col] = le.transform(input_df[col])
+        df[col] = le.fit_transform(df[col])
+    
+    y = df.fraud_reported
+    feat = list(df.columns)
+    feat.remove('fraud_reported')
+    x = df[feat]
 
-    if st.button("Predict Fraud for Manual Data"):
-        st.subheader("Prediction Results")
-        predictions = {}
-        for name, model in selected_models.items():
-            model.fit(X_train, y_train)  # Training the model
-            pred = model.predict(input_df)
-            predictions[name] = pred[0]
-            st.write(f"{name}: {'Fraud' if pred[0] == 1 else 'Not Fraud'}")
+    # Train-test split
+    X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42, stratify=y)
 
-        # Model evaluation
-        st.subheader("Model Evaluation Results")
-        results, names = [], []
+    # Handle class imbalance
+    smt = SMOTE()
+    X_train, y_train = smt.fit_resample(X_train, y_train)
 
-        for name, model in selected_models.items():
-            scores = cross_val_score(model, X_train, y_train, scoring='accuracy', 
-                                     cv=RepeatedStratifiedKFold(n_splits=10, n_repeats=3, random_state=5), n_jobs=-1)
-            results.append(scores)  # Store individual scores
-            names.append(name)
+    # Load models
+    models = get_models()
 
-        if results:
-            mean_scores = [mean(score) for score in results]  # Calculate mean scores for highlighting
-            best_model = names[np.argmax(mean_scores)]
-            worst_model = names[np.argmin(mean_scores)]
+    # Model selection
+    model_options = st.multiselect("Select Models", options=list(models.keys()), default=list(models.keys()))
 
-            for i, name in enumerate(names):
-                if name == best_model:
-                    st.markdown(f"<span style='color:green;'>**Best Model**: {name} - Accuracy: {mean_scores[i]:.2f}</span>", unsafe_allow_html=True)
-                elif name == worst_model:
-                    st.markdown(f"<span style='color:red;'>**Worst Model**: {name} - Accuracy: {mean_scores[i]:.2f}</span>", unsafe_allow_html=True)
+    if not model_options:
+        st.warning("Please select at least one model to proceed.")
+    else:
+        selected_models = {name: models[name] for name in model_options}
+
+        # Manual data input form
+        st.subheader("Manual Data Entry for Prediction")
+
+        # Create a wide layout for input fields with 4 rows
+        num_columns = 4
+        columns = st.columns(num_columns)
+
+        input_data = {}
+        for idx, col in enumerate(feat):
+            with columns[idx % num_columns]:  # Cycle through columns
+                if df[col].dtype == 'object':
+                    input_data[col] = st.selectbox(f"Select {col}", df[col].unique())
                 else:
-                    st.write(f"{name}: Accuracy: {mean_scores[i]:.2f}")
+                    input_data[col] = st.number_input(f"Enter {col}", value=float(df[col].mean()))
 
-            # Plot results using boxplot with custom colors
-            fig, ax = plt.subplots()
-            box = ax.boxplot(results, labels=names, showmeans=True, patch_artist=True)
+        # Convert input_data to a DataFrame for prediction
+        input_df = pd.DataFrame([input_data])
 
-            # Customize boxplot colors
-            for i, box in enumerate(box['boxes']):
-                if names[i] == "Stacking":
-                    box.set_facecolor('lightblue')  # Change color for the Stacking model
-                else:
-                    box.set_facecolor('lightgray')  # Default color for other models
+        # Preprocess the manually input data
+        for col in df.select_dtypes(include='object').columns:
+            input_df[col] = le.transform(input_df[col])
 
-            ax.set_title("Algorithm Comparison")
-            st.pyplot(fig)
-        else:
-            st.write("No models were evaluated.")
+        if st.button("Predict Fraud for Manual Data"):
+            st.subheader("Prediction Results")
+            predictions = {}
+            for name, model in selected_models.items():
+                model.fit(X_train, y_train)  # Training the model
+                pred = model.predict(input_df)
+                predictions[name] = pred[0]
+                st.write(f"{name}: {'Fraud' if pred[0] == 1 else 'Not Fraud'}")
+
+            # Model evaluation
+            st.subheader("Model Evaluation Results")
+            results, names = [], []
+
+            for name, model in selected_models.items():
+                scores = cross_val_score(model, X_train, y_train, scoring='accuracy', 
+                                         cv=RepeatedStratifiedKFold(n_splits=10, n_repeats=3, random_state=5), n_jobs=-1)
+                results.append(scores)  # Store individual scores
+                names.append(name)
+
+            if results:
+                mean_scores = [mean(score) for score in results]  # Calculate mean scores for highlighting
+                best_model = names[np.argmax(mean_scores)]
+                worst_model = names[np.argmin(mean_scores)]
+
+                for i, name in enumerate(names):
+                    if name == best_model:
+                        st.markdown(f"<span style='color:green;'>**Best Model**: {name} - Accuracy: {mean_scores[i]:.2f}</span>", unsafe_allow_html=True)
+                    elif name == worst_model:
+                        st.markdown(f"<span style='color:red;'>**Worst Model**: {name} - Accuracy: {mean_scores[i]:.2f}</span>", unsafe_allow_html=True)
+                    else:
+                        st.write(f"{name}: Accuracy: {mean_scores[i]:.2f}")
+
+                # Plot results using boxplot with custom colors
+                fig, ax = plt.subplots()
+                box = ax.boxplot(results, labels=names, showmeans=True, patch_artist=True)
+
+                # Customize boxplot colors
+                for i, box in enumerate(box['boxes']):
+                    if names[i] == "Stacking":
+                        box.set_facecolor('lightblue')  # Change color for the Stacking model
+                    else:
+                        box.set_facecolor('lightgray')  # Default color for other models
+
+                ax.set_title("Algorithm Comparison")
+                st.pyplot(fig)
+            else:
+                st.write("No models were evaluated.")
+else:
+    st.info("Please select a CSV file to proceed.")
